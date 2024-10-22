@@ -1,49 +1,58 @@
 <?php
-header('Content-Type: application/json');
+include 'get_item_count.php';
+// Suppress warnings from invalid HTML
+libxml_use_internal_errors(true);
 
-// Initialize the cURL session
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, 'https://www.decora.ee/');
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+// URL of the page to scrape
+$url = 'https://www.nailpassion.ee/pood/';
 
-// Execute the cURL request
-$html = curl_exec($ch);
-curl_close($ch);
+// Get the HTML content
+$htmlContent = file_get_contents($url);
 
-// Load the HTML into a DOMDocument
+// Check if content was fetched successfully
+if ($htmlContent === false) {
+    // Return error in JSON format
+    echo json_encode(['error' => 'Failed to fetch HTML content from the URL.']);
+    exit;
+}
+
+// Create a new DOMDocument instance
 $dom = new DOMDocument();
-@$dom->loadHTML($html); // Suppress warnings for invalid HTML
+@$dom->loadHTML($htmlContent); // Suppress warnings for invalid HTML
 
+// Create a new DOMXPath instance
 $xpath = new DOMXPath($dom);
 
-// Get top-level category names, ensuring we ignore nested categories
+// Find the main categories
+$mainCategories = $xpath->query('//div[contains(@class, "jet-custom-nav")]//div[contains(@class, "menu-item-has-children")]');
+
 $categories = [];
 
-// Fetch all top-level categories
-$categoryNodes = $xpath->query("//div[contains(@class, 'categories-widget')]//li[contains(@class, 'cat') and not(ancestor::ul[contains(@class, 'sub-menu')])]");
+foreach ($mainCategories as $mainCategory) {
+    // Get the category name
+    $categoryNode = $xpath->query('.//span[contains(@class, "top-level-label")]', $mainCategory);
 
-// Loop through each top-level category node found
-foreach ($categoryNodes as $node) {
-    // Extract category name
-    $categoryNameNode = $xpath->query(".//span[contains(@class, 'cat-name')]", $node);
-    if ($categoryNameNode->length > 0) {
-        $categoryName = trim($categoryNameNode->item(0)->textContent);
+    if ($categoryNode->length > 0) {
+        $categoryName = trim($categoryNode->item(0)->nodeValue);
 
-        // Count immediate subcategories
-        $subcategoryCount = $xpath->query(".//ul[contains(@class, 'sub-menu lvl-2')][1]/li", $node)->length; // Only count direct children of the first sub-menu
+        // Count the subcategories
+        $subItemsCount = $xpath->query('.//div[contains(@class, "jet-custom-nav__sub")]/div[contains(@class, "menu-item")]', $mainCategory)->length;
 
-        // Placeholder for items count
-        $itemsCount = 0; // This can be updated later based on additional scraping
+        // Count items in this category
+        $itemCount = getItemsCount($categoryName); // Call the item counting function
 
-        // Append to the categories array
+        // Store the results in the categories array
         $categories[] = [
             'category_name' => $categoryName,
-            'subcategory_count' => $subcategoryCount,
-            'items_count' => $itemsCount
+            'subcategory_count' => $subItemsCount,
+            'items_count' => $itemCount
         ];
     }
 }
 
-// Output the categories as JSON
+// Set the content type to JSON
+header('Content-Type: application/json');
+
+// Output the result in JSON format
 echo json_encode($categories);
 

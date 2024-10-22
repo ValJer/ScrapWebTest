@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const itemsBtn = document.getElementById('itemsBtn');
     const tableHeader = document.getElementById('table-header');
     const tableBody = document.getElementById('table-body');
+    const debug = document.getElementById('debug');
 
     // Function to make an AJAX request to the backend
     function fetchData(url, callback) {
@@ -61,5 +62,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const rows = data.map(item => [item.item_name, item.item_price, item.discount_price || 'N/A']);
             updateTable(header, rows);
         });
+    });
+    debug.addEventListener('click', () => {
+        // Define the category for which you want to debug the item count
+        const categoryName = 'aiakaubad'; // Replace with your dynamic category value
+
+        // Make an AJAX request to get_item_count.php with the category name
+        fetch(`../backend/get_categories.php`)
+            .then(response => response.text()) // Expect a plain text response (not JSON)
+            .then(itemsCount => {
+                // Log the itemsCount received from the server
+                console.log(`Items Count for ${categoryName}: ${itemsCount}`);
+            })
+            .catch(error => {
+                console.error('Error fetching item count:', error);
+            });
     });
 });
