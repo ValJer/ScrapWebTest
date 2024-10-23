@@ -27,6 +27,7 @@ header {
     display: flex;
     justify-content: center; /* Align charts to the center */
     margin-bottom: 20px; /* Space between charts and table */
+    width: 100%;
 }
 
 .chart-container canvas {
@@ -34,8 +35,8 @@ header {
 }
 
 .table-container {
-    width: 100%; /* Make the table full width */
-    overflow-x: auto; /* Allow horizontal scroll on smaller screens */
+    width: 100%;
+    overflow-x: auto;
 }
 
 table {
