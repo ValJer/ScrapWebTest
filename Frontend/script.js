@@ -1,11 +1,10 @@
-import { drawPieChart } from './chart.js'; // Adjust the path if necessary
+import { drawPieChart } from './chart.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const categoriesBtn = document.getElementById('categoriesBtn');
-    const subcategoriesBtn = document.getElementById('subcategoriesBtn');
-    const itemsBtn = document.getElementById('itemsBtn');
     const tableHeader = document.getElementById('table-header');
     const tableBody = document.getElementById('table-body');
+    const itemsChart = document.getElementById('itemsChart');
 
     // Function to make an AJAX request to the backend
     function fetchData(url, callback) {
@@ -40,37 +39,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Event listeners for the buttons
+    // Event listener for the categories button
     categoriesBtn.addEventListener('click', () => {
         fetchData('../backend/get_categories.php', (data) => {
             const header = ['Category Name', 'Subcategory Count', 'Items Count'];
             const rows = data.map(item => [item.category_name, item.subcategory_count, item.items_count]);
-
-            // Update the table
             updateTable(header, rows);
-
-            // Prepare data for the pie chart
-            const labels = data.map(item => item.category_name);
-            const itemCounts = data.map(item => item.items_count);
-
-            // Draw the pie chart
-            drawPieChart('itemsChart', itemCounts, labels);
-        });
-    });
-
-    subcategoriesBtn.addEventListener('click', () => {
-        fetchData('../backend/get_subcategories.php', (data) => {
-            const header = ['Subcategory Name', 'Items Count'];
-            const rows = data.map(item => [item.subcategory_name, item.items_count]);
-            updateTable(header, rows);
-        });
-    });
-
-    itemsBtn.addEventListener('click', () => {
-        fetchData('../backend/get_items.php', (data) => {
-            const header = ['Item Name', 'Item Price', 'Discount Price'];
-            const rows = data.map(item => [item.item_name, item.item_price, item.discount_price || 'N/A']);
-            updateTable(header, rows);
+            drawPieChart(data, 'chart1', 'items_count', "Number of Items in Each Category");
+            drawPieChart(data, 'chart2', 'subcategory_count', "Number of Subcategories in Each Category");
         });
     });
 });

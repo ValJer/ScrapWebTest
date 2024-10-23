@@ -3,24 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pie Chart Example</title>
     <link rel="stylesheet" href="styles.css">
+    <title>Your Title</title>
 </head>
 <body>
-
-<div id="chart-container">
-    <canvas id="itemsChart" width="300" height="300"></canvas>
-    <div id="table-container">
-        <button id="categoriesBtn">Load Categories</button>
-        <button id="subcategoriesBtn">Load Subcategories</button>
-        <button id="itemsBtn">Load Items</button>
+<header>
+    <button id="categoriesBtn">Load Categories</button>
+</header>
+<main class="container">
+    <div class="chart-container">
+        <canvas id="chart1" width="400" height="400"></canvas>
+        <canvas id="chart2" width="400" height="400"></canvas>
+    </div>
+    <div class="table-container">
         <table>
             <thead id="table-header"></thead>
             <tbody id="table-body"></tbody>
         </table>
     </div>
-</div>
-
+</main>
 <script src="script.js" type="module"></script>
 </body>
 </html>

@@ -1,31 +1,64 @@
-export function drawPieChart(canvasId, data, labels) {
-    const canvas = document.getElementById(canvasId);
-    const ctx = canvas.getContext('2d');
+export function drawPieChart(data, chartId, countType, chartName) {
+    const chartCanvas = document.getElementById(chartId);
+    const ctx = chartCanvas.getContext('2d');
 
-    const total = data.reduce((sum, value) => sum + value, 0); // Calculate total items
-    let currentAngle = 0;
+    // Clear previous chart
+    ctx.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
 
-    data.forEach((value, index) => {
-        const sliceAngle = (value / total) * 2 * Math.PI; // Calculate the angle for each slice
+    const labels = data.map(item => `${item.category_name} (${item[countType]})`);
+    const values = data.map(item => item[countType]);
+
+    const total = values.reduce((acc, val) => acc + val, 0);
+    const colors = generateDistinctColors(values.length);
+
+    const centerX = chartCanvas.width / 2;
+    const centerY = chartCanvas.height / 2;
+    const radius = Math.min(centerX, centerY) - 40; // Adjust padding
+    let startAngle = 0;
+
+    // Draw each segment
+    values.forEach((value, index) => {
+        const sliceAngle = (value / total) * 2 * Math.PI;
+
+        // Draw the slice
         ctx.beginPath();
-        ctx.moveTo(canvas.width / 2, canvas.height / 2); // Move to the center of the canvas
-        ctx.arc(canvas.width / 2, canvas.height / 2, 100, currentAngle, currentAngle + sliceAngle); // Draw the slice
-        ctx.closePath();
-
-        // Set color for the slice
-        ctx.fillStyle = `hsl(${(index * 360) / data.length}, 100%, 50%)`;
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle);
+        ctx.fillStyle = colors[index];
         ctx.fill();
 
-        currentAngle += sliceAngle; // Update the angle for the next slice
+        startAngle += sliceAngle;
     });
 
+    // Add category names outside the chart
+    startAngle = 0;
+    const textOffset = radius + 20; // Move text outside the chart
 
-    ctx.fillStyle = '#000'; // Set text color
-    ctx.font = '14px Arial';
-    labels.forEach((label, index) => {
-        const angle = (currentAngle - sliceAngle / 2) + (index * (sliceAngle / 2));
-        const x = canvas.width / 2 + Math.cos(angle) * 70; // X position for the label
-        const y = canvas.height / 2 + Math.sin(angle) * 70; // Y position for the label
-        ctx.fillText(label, x, y); // Draw the label
+    values.forEach((value, index) => {
+        const sliceAngle = (value / total) * 2 * Math.PI;
+        const textX = centerX + textOffset * Math.cos(startAngle + sliceAngle / 2);
+        const textY = centerY + textOffset * Math.sin(startAngle + sliceAngle / 2);
+
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 12px Arial';
+        ctx.fillText(labels[index], textX, textY);
+
+        startAngle += sliceAngle;
     });
+
+    // Draw the chart title dynamically
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 16px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(chartName, centerX, 15);
+}
+
+function generateDistinctColors(numColors) {
+    const colors = [];
+    for (let i = 0; i < numColors; i++) {
+        const hue = (i * 360 / numColors) % 360; // Spread colors evenly around the hue circle
+        const color = `hsl(${hue}, 70%, 50%)`; // Set saturation and lightness
+        colors.push(color);
+    }
+    return colors;
 }
