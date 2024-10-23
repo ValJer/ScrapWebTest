@@ -1,10 +1,11 @@
+import { drawPieChart } from './chart.js'; // Adjust the path if necessary
+
 document.addEventListener('DOMContentLoaded', () => {
     const categoriesBtn = document.getElementById('categoriesBtn');
     const subcategoriesBtn = document.getElementById('subcategoriesBtn');
     const itemsBtn = document.getElementById('itemsBtn');
     const tableHeader = document.getElementById('table-header');
     const tableBody = document.getElementById('table-body');
-    const debug = document.getElementById('debug');
 
     // Function to make an AJAX request to the backend
     function fetchData(url, callback) {
@@ -44,7 +45,16 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchData('../backend/get_categories.php', (data) => {
             const header = ['Category Name', 'Subcategory Count', 'Items Count'];
             const rows = data.map(item => [item.category_name, item.subcategory_count, item.items_count]);
+
+            // Update the table
             updateTable(header, rows);
+
+            // Prepare data for the pie chart
+            const labels = data.map(item => item.category_name);
+            const itemCounts = data.map(item => item.items_count);
+
+            // Draw the pie chart
+            drawPieChart('itemsChart', itemCounts, labels);
         });
     });
 
@@ -62,20 +72,5 @@ document.addEventListener('DOMContentLoaded', () => {
             const rows = data.map(item => [item.item_name, item.item_price, item.discount_price || 'N/A']);
             updateTable(header, rows);
         });
-    });
-    debug.addEventListener('click', () => {
-        // Define the category for which you want to debug the item count
-        const categoryName = 'aiakaubad'; // Replace with your dynamic category value
-
-        // Make an AJAX request to get_item_count.php with the category name
-        fetch(`../backend/get_categories.php`)
-            .then(response => response.text()) // Expect a plain text response (not JSON)
-            .then(itemsCount => {
-                // Log the itemsCount received from the server
-                console.log(`Items Count for ${categoryName}: ${itemsCount}`);
-            })
-            .catch(error => {
-                console.error('Error fetching item count:', error);
-            });
     });
 });

@@ -3,26 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Category Dashboard</title>
+    <title>Pie Chart Example</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-<div class="container">
-    <div class="table-container">
+
+<div id="chart-container">
+    <canvas id="itemsChart" width="300" height="300"></canvas>
+    <div id="table-container">
         <button id="categoriesBtn">Load Categories</button>
         <button id="subcategoriesBtn">Load Subcategories</button>
         <button id="itemsBtn">Load Items</button>
-        <button id="debug">Debug</button>
         <table>
             <thead id="table-header"></thead>
             <tbody id="table-body"></tbody>
         </table>
     </div>
-    <div class="chart-container">
-        <canvas id="itemsChart"></canvas>
-    </div>
 </div>
-<script src="script.js"></script>
+
+<script src="script.js" type="module"></script>
 </body>
 </html>

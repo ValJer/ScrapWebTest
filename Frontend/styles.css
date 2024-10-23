@@ -43,3 +43,39 @@ th {
 tr:hover {
     background-color: #f1f1f1;
 }
+#chart-container {
+    display: flex;
+    justify-content: space-between;
+    width: 100%; /* Full width */
+    max-width: 1200px; /* Optional max width */
+    margin: 0 auto; /* Center align */
+}
+
+/* Styling for the canvas */
+canvas {
+    border: 1px solid #ccc;
+    margin: 20px;
+    flex: 1; /* Allow canvas to grow */
+}
+
+/* Table container styling */
+#table-container {
+    flex: 1; /* Allow table to grow */
+    margin: 20px; /* Margin for table */
+}
+
+/* Basic table styling */
+table {
+    border-collapse: collapse;
+    width: 100%; /* Full width */
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left; /* Left-align text */
+}
+
+th {
+    background-color: #f2f2f2;
+}
