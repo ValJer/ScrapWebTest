@@ -1,58 +1,84 @@
 <?php
+
+error_log('script started');
 include 'get_item_count.php';
-// Suppress warnings from invalid HTML
-libxml_use_internal_errors(true);
+$baseUrl = 'https://www.mullitaja.ee/';  // Main categories page
 
-// URL of the page to scrape
-$url = 'https://www.nailpassion.ee/pood/';
+// Initialize cURL
+$ch = curl_init();
 
-// Get the HTML content
-$htmlContent = file_get_contents($url);
+// Set the cURL options
+curl_setopt($ch, CURLOPT_URL, $baseUrl);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 
-// Check if content was fetched successfully
-if ($htmlContent === false) {
-    // Return error in JSON format
-    echo json_encode(['error' => 'Failed to fetch HTML content from the URL.']);
+// Execute the cURL request and fetch the response
+$response = curl_exec($ch);
+
+// Check for cURL errors
+if (curl_errno($ch)) {
+    error_log('cURL error: ' . curl_error($ch));
     exit;
 }
 
-// Create a new DOMDocument instance
-$dom = new DOMDocument();
-@$dom->loadHTML($htmlContent); // Suppress warnings for invalid HTML
+// Close the cURL session
+curl_close($ch);
 
-// Create a new DOMXPath instance
+// Create a new DOMDocument object
+$dom = new DOMDocument();
+
+// Suppress errors due to malformed HTML
+libxml_use_internal_errors(true);
+
+// Load the HTML content into the DOMDocument object
+$dom->loadHTML($response);
+
+// Clear the errors after loading
+libxml_clear_errors();
+
+// Create a new DOMXPath object
 $xpath = new DOMXPath($dom);
 
-// Find the main categories
-$mainCategories = $xpath->query('//div[contains(@class, "jet-custom-nav")]//div[contains(@class, "menu-item-has-children")]');
+// Query for the main categories in the side menu
+$category_nodes = $xpath->query('//div[@id="category_menu"]//li[contains(@class, "level0")]');
 
-$categories = [];
-
-foreach ($mainCategories as $mainCategory) {
-    // Get the category name
-    $categoryNode = $xpath->query('.//span[contains(@class, "top-level-label")]', $mainCategory);
-
-    if ($categoryNode->length > 0) {
-        $categoryName = trim($categoryNode->item(0)->nodeValue);
-
-        // Count the subcategories
-        $subItemsCount = $xpath->query('.//div[contains(@class, "jet-custom-nav__sub")]/div[contains(@class, "menu-item")]', $mainCategory)->length;
-
-        // Count items in this category
-        $itemCount = getItemsCount($categoryName); // Call the item counting function
-
-        // Store the results in the categories array
-        $categories[] = [
-            'category_name' => $categoryName,
-            'subcategory_count' => $subItemsCount,
-            'items_count' => $itemCount
-        ];
-    }
+// Check if any category nodes were found
+if ($category_nodes->length === 0) {
+    echo json_encode(['error' => 'No category nodes found. Check the XPath expression or page structure.']);
+    exit;
 }
 
-// Set the content type to JSON
+// Prepare an array to store the categories and their data
+$categories = [];
+
+foreach ($category_nodes as $category_node) {
+    // Extract the category name and URL
+    $category_link = $xpath->query('.//a', $category_node);
+    if ($category_link->length > 0) {
+        $category_name = trim($category_link->item(0)->nodeValue);
+        $category_url = $category_link->item(0)->getAttribute('href');
+    } else {
+        continue; // If no category name found, skip this entry
+    }
+
+    // Count the number of subcategories within the current category
+    $subcategory_count = $xpath->query('.//ul[contains(@class, "nav-list")]//li[contains(@class, "level1")]', $category_node)->length;
+
+    // Call get_items_count.php to get the item count for the category
+    $items_count = getItemsCount($category_url);
+
+    // Store the category and its data
+    $categories[] = [
+        'category_name' => $category_name,
+        'items_count' => $items_count,
+        'subcategory_count' => $subcategory_count,
+    ];
+}
+// Set the header to indicate JSON response
 header('Content-Type: application/json');
 
-// Output the result in JSON format
-echo json_encode($categories);
-
+// Output the result as JSON
+echo json_encode($categories, JSON_PRETTY_PRINT);

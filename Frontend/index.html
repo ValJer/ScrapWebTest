@@ -3,30 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
-    <link rel="stylesheet" href="styles.css"> <!-- Link to optional CSS file -->
+    <title>Category Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-<div class="header">
-    <button id="categoriesBtn">Categories</button>
-    <button id="subcategoriesBtn">Subcategories</button>
-    <button id="itemsBtn">Items</button>
-    <button id="debug">DebugButton</button>
+<div class="container">
+    <div class="table-container">
+        <button id="categoriesBtn">Load Categories</button>
+        <button id="subcategoriesBtn">Load Subcategories</button>
+        <button id="itemsBtn">Load Items</button>
+        <button id="debug">Debug</button>
+        <table>
+            <thead id="table-header"></thead>
+            <tbody id="table-body"></tbody>
+        </table>
+    </div>
+    <div class="chart-container">
+        <canvas id="itemsChart"></canvas>
+    </div>
 </div>
-
-<div class="table-container">
-    <table id="data-table">
-        <thead>
-        <tr id="table-header">
-            <!-- Table header will be populated dynamically -->
-        </tr>
-        </thead>
-        <tbody id="table-body">
-        <!-- Table body will be populated dynamically -->
-        </tbody>
-    </table>
-</div>
-
 <script src="script.js"></script>
 </body>
 </html>

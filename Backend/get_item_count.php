@@ -1,56 +1,85 @@
 <?php
-error_log("get_item_count script started");
+function getItemsCount($url) {
+    // Initialize total items count
+    $total_items = 0;
+    $current_page = 1; // Start from the first page
 
-function getItemsCount($category) {
-    // Base URL of the site
-    error_log("get_item_count function started");
+    while (true) {
+        // Create a new cURL session for the current page
+        $ch = curl_init();
 
-    // Convert category to lowercase and replace spaces with hyphens
-    $formattedCategory = strtolower(str_replace(' ', '-', $category));
+        // Set the cURL options
+        curl_setopt($ch, CURLOPT_URL, $url . '?page=' . $current_page); // Append the page number
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 
-    $baseUrl = 'https://www.nailpassion.ee/';
-    $url = $baseUrl . $formattedCategory;
-    error_log("Formatted URL is " . $url);
+        // Execute the cURL request and fetch the response
+        $response = curl_exec($ch);
 
-    // Initialize a cURL session
-    $ch = curl_init();
+        // Check for cURL errors
+        if (curl_errno($ch)) {
+            error_log('cURL error while fetching items count for page ' . $current_page . ': ' . curl_error($ch));
+            curl_close($ch);
+            break; // Exit loop on error
+        }
 
-    // Set the URL to scrape
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        // Close the cURL session
+        curl_close($ch);
 
-    // Execute cURL request
-    $response = curl_exec($ch);
+        // Create a new DOMDocument object
+        $dom = new DOMDocument();
 
-    // Check for cURL errors
-    if (curl_errno($ch)) {
-        error_log('cURL error: ' . curl_error($ch));
-        return 0;
+        // Suppress errors due to malformed HTML
+        libxml_use_internal_errors(true);
+
+        // Load the HTML content into the DOMDocument object
+        $dom->loadHTML($response);
+
+        // Clear the errors after loading
+        libxml_clear_errors();
+
+        // Create a new DOMXPath object
+        $xpath = new DOMXPath($dom);
+
+        // Query for the items on the current page
+        $item_count_nodes = $xpath->query('//div[contains(@class, "item")]');
+        $total_items += $item_count_nodes->length; // Increment total items with the count on this page
+
+        // Query for the pagination section
+        $pagination_nodes = $xpath->query('//div[contains(@class, "pagination listing_header_row2")]//div[contains(@class, "links")]');
+
+        // Check if pagination exists
+        if ($pagination_nodes->length > 0) {
+            $links = $pagination_nodes->item(0)->getElementsByTagName('a');
+            $next_page_exists = false;
+
+            // Check for the next page link
+            foreach ($links as $link) {
+                // Check if the link contains the next page number
+                $href = $link->getAttribute('href');
+                if (strpos($href, 'page=' . ($current_page + 1)) !== false) {
+                    $next_page_exists = true; // Next page exists
+                    break; // Exit the loop as we found the next page
+                }
+            }
+
+            // If next page does not exist, stop the loop
+            if (!$next_page_exists) {
+                break; // Exit the loop
+            }
+        } else {
+            // If no pagination found, exit the loop
+            break; // Exit the loop
+        }
+
+        // Increment to the next page
+        $current_page++;
     }
 
-    // Close the cURL session
-    curl_close($ch);
-
-    // Create a DOMDocument to parse the HTML
-    $dom = new DOMDocument();
-
-    // Suppress errors due to invalid HTML
-    @$dom->loadHTML($response);
-
-    // Create a new DOMXPath instance
-    $xpath = new DOMXPath($dom);
-
-    // XPath query to find products
-    $items = $xpath->query('//ul[contains(@class, "products")]//li[contains(@class, "entry")]//li[@class="title"]//h2');
-
-    $totalItemsCount = $items->length;
-    error_log("Total items count for category $category: " . $totalItemsCount);
-
     // Return the total count of items found
-    return $totalItemsCount;
+    return $total_items;
 }
 
